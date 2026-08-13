@@ -16,7 +16,14 @@ Aplicativo Android nativo que usa a localização atual e os dados do Google Map
 
 ## APK para teste
 
-O APK completo será publicado na seção [Releases](https://github.com/YanDelaroli/busca-localiz-android/releases) quando o segredo `MAPS_API_KEY` estiver configurado no repositório. A pesquisa, o mapa, os marcadores e a lista de resultados permanecem inteiramente dentro do aplicativo.
+O APK completo será publicado na seção [Releases](https://github.com/YanDelaroli/busca-localiz-android/releases) após a configuração segura da chave. A pesquisa, o mapa, os marcadores e a lista de resultados permanecem inteiramente dentro do aplicativo.
+
+O fluxo de distribuição evita publicar uma chave sem proteção:
+
+1. adicione `MAPS_API_KEY` em **Settings > Secrets and variables > Actions**;
+2. um push comum gera uma versão privada e registra o SHA-1 do APK no resumo do workflow;
+3. restrinja a chave ao pacote `com.yandelaroli.buscalocal`, ao SHA-1 informado e somente às APIs Maps SDK for Android e Places API (New);
+4. um commit contendo `[publish-apk]` publica o mesmo APK já assinado, sem substituir o arquivo por outra compilação.
 
 ## Tecnologias
 

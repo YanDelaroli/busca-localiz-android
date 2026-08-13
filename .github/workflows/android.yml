@@ -37,11 +37,12 @@ jobs:
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
         run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
 
-      - name: Publicar somente a versão com pesquisa interna
+      - name: Preparar ou publicar APK com pesquisa interna
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           if [ -z "$MAPS_API_KEY" ]; then
             echo "MAPS_API_KEY não configurada: nenhum APK será publicado."
@@ -49,8 +50,44 @@ jobs:
             exit 0
           fi
 
+          if [[ "$COMMIT_MESSAGE" == *"[publish-apk]"* ]]; then
+            release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" \
+              --jq '.[] | select(.tag_name == "v1.0.0-teste" and .draft == true) | .id' \
+              | head -n 1)"
+
+            if [ -z "$release_id" ]; then
+              echo "Nenhuma versão privada pronta para publicação."
+              exit 1
+            fi
+
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" \
+              -F draft=false >/dev/null
+            echo "APK previamente validado publicado sem recompilação do arquivo distribuído."
+            exit 0
+          fi
+
           cp app/build/outputs/apk/debug/app-debug.apk Busca-Local-v1.0.0-teste.apk
-          gh release create v1.0.0-teste Busca-Local-v1.0.0-teste.apk \
+          certificate_sha1="$("$ANDROID_HOME/build-tools/35.0.0/apksigner" \
+            verify --print-certs Busca-Local-v1.0.0-teste.apk \
+            | sed -n 's/.*certificate SHA-1 digest: //p' | head -n 1 \
+            | sed 's/../&:/g; s/:$//' | tr '[:lower:]' '[:upper:]')"
+
+          echo "SHA-1 do APK: $certificate_sha1"
+          {
+            echo "## APK aguardando restrição da chave"
+            echo
+            echo "- Pacote: \`com.yandelaroli.buscalocal\`"
+            echo "- SHA-1: \`$certificate_sha1\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          old_draft_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" \
+            --jq '.[] | select(.tag_name == "v1.0.0-teste" and .draft == true) | .id' \
+            | head -n 1)"
+          if [ -n "$old_draft_id" ]; then
+            gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/$old_draft_id"
+          fi
+
+          gh release create v1.0.0-teste Busca-Local-v1.0.0-teste.apk --draft \
             --target "$GITHUB_SHA" \
             --title "Busca Local v1.0.0 — teste" \
-            --notes "APK instalável com pesquisa e resultados exibidos inteiramente dentro do Busca Local."
+            --notes "APK instalável com pesquisa e resultados exibidos inteiramente dentro do Busca Local. Esta versão será publicada após a chave ser restringida ao pacote e ao SHA-1 do arquivo."
