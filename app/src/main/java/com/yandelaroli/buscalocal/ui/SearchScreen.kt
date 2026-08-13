@@ -107,7 +107,6 @@ fun SearchScreen(
     onRetry: () -> Unit,
     onDismissError: () -> Unit,
     onOpenDirections: (NearbyPlace) -> Unit,
-    onOpenExternalSearch: (String) -> Unit,
     onOpenLocationSettings: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -157,15 +156,12 @@ fun SearchScreen(
             )
 
             when {
+                !state.apiKeyConfigured -> ApiKeySetupContent()
                 !state.hasLocationPermission -> PermissionContent(onRequestPermission)
                 state.userLocation == null -> LocationLoadingContent(
                     isLoading = state.isLocating,
                     onRetry = onRefreshLocation,
                     onOpenSettings = onOpenLocationSettings,
-                )
-                !state.apiKeyConfigured -> ExternalMapsModeContent(
-                    searchLabel = state.searchLabel,
-                    onOpenGoogleMaps = { onOpenExternalSearch(state.searchLabel) },
                 )
                 else -> SearchResultsContent(
                     state = state,
@@ -197,7 +193,7 @@ private fun SearchControls(
             value = state.query,
             onValueChange = onQueryChanged,
             modifier = Modifier.fillMaxWidth(),
-            enabled = true,
+            enabled = state.apiKeyConfigured,
             singleLine = true,
             shape = RoundedCornerShape(18.dp),
             placeholder = { Text("Ex.: loja de bolo, papelaria…") },
@@ -205,17 +201,9 @@ private fun SearchControls(
                 Icon(Icons.Rounded.Search, contentDescription = null)
             },
             trailingIcon = {
-                if (state.query.isNotBlank()) Row {
+                if (state.query.isNotBlank()) {
                     IconButton(onClick = { onQueryChanged("") }) {
                         Icon(Icons.Rounded.Close, contentDescription = "Limpar busca")
-                    }
-                    IconButton(
-                        onClick = {
-                            focusManager.clearFocus()
-                            onSearch()
-                        },
-                    ) {
-                        Icon(Icons.Rounded.Search, contentDescription = "Buscar")
                     }
                 }
             },
@@ -239,7 +227,7 @@ private fun SearchControls(
                     selected = !state.isTextSearchActive &&
                         state.selectedCategory.id == category.id,
                     onClick = { onCategorySelected(category) },
-                    enabled = true,
+                    enabled = state.apiKeyConfigured,
                     label = { Text(category.label) },
                     leadingIcon = {
                         Icon(
@@ -265,7 +253,7 @@ private fun SearchControls(
                 FilterChip(
                     selected = state.selectedArea == area,
                     onClick = { onAreaSelected(area) },
-                    enabled = true,
+                    enabled = state.apiKeyConfigured,
                     label = { Text("${area.label} · ${area.description}") },
                 )
             }
@@ -556,10 +544,7 @@ private fun PlaceResultCard(
 }
 
 @Composable
-private fun ExternalMapsModeContent(
-    searchLabel: String,
-    onOpenGoogleMaps: () -> Unit,
-) {
+private fun ApiKeySetupContent() {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -576,29 +561,32 @@ private fun ExternalMapsModeContent(
                 )
                 Spacer(Modifier.height(14.dp))
                 Text(
-                    text = "Modo de teste pronto",
+                    text = "Configure o Google Maps",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Você pode testar agora sem configurar nada. A busca será aberta no " +
-                        "Google Maps usando sua localização atual.",
+                    "Ative Maps SDK for Android e Places API (New) no Google Cloud. " +
+                        "Depois, adicione sua chave ao arquivo local.properties:",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Spacer(Modifier.height(14.dp))
-                Button(
-                    onClick = onOpenGoogleMaps,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(Icons.Rounded.Search, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Buscar $searchLabel no Google Maps")
-                }
+                Text(
+                    text = "MAPS_API_KEY=SUA_CHAVE_AQUI",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant,
+                            RoundedCornerShape(10.dp),
+                        )
+                        .padding(12.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "Com uma chave própria do Google Maps, o aplicativo também mostra o mapa " +
-                        "e a lista de resultados na própria tela.",
+                    "A chave não deve ser enviada para o GitHub. Veja o passo a passo completo no README.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

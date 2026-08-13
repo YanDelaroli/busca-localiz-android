@@ -152,7 +152,10 @@ class SearchViewModel(
         val repository = placesRepository
         if (repository == null) {
             _uiState.update {
-                it.copy(isLoading = false, errorMessage = null)
+                it.copy(
+                    isLoading = false,
+                    errorMessage = "Configure a chave do Google Maps para realizar buscas.",
+                )
             }
             return
         }
