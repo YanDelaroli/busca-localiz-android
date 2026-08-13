@@ -6,7 +6,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -36,3 +36,21 @@ jobs:
         env:
           MAPS_API_KEY: ""
         run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
+
+      - name: Preparar APK para download
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: cp app/build/outputs/apk/debug/app-debug.apk Busca-Local-v1.0.0-teste.apk
+
+      - name: Publicar APK de teste
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v1.0.0-teste >/dev/null 2>&1; then
+            gh release upload v1.0.0-teste Busca-Local-v1.0.0-teste.apk --clobber
+          else
+            gh release create v1.0.0-teste Busca-Local-v1.0.0-teste.apk \
+              --target "$GITHUB_SHA" \
+              --title "Busca Local v1.0.0 — teste" \
+              --notes "APK instalável para testar o Busca Local. No modo sem chave, as consultas são abertas diretamente no Google Maps."
+          fi
