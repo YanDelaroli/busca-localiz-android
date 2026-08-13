@@ -14,11 +14,9 @@ Aplicativo Android nativo que usa a localização atual e os dados do Google Map
 - interface em português com tema claro e escuro;
 - testes unitários e validação automática pelo GitHub Actions.
 
-## Baixar e testar sem configurar nada
+## APK para teste
 
-Baixe o APK na seção [Releases](https://github.com/YanDelaroli/busca-localiz-android/releases), instale no Android e permita a localização. Sem uma chave de API, o aplicativo funciona em **modo de teste**: você escolhe uma categoria ou digita uma busca e os resultados são abertos diretamente no Google Maps, usando sua localização atual.
-
-Para mostrar mapa, marcadores e a lista de estabelecimentos dentro do próprio aplicativo, siga a configuração da chave descrita abaixo.
+O APK completo será publicado na seção [Releases](https://github.com/YanDelaroli/busca-localiz-android/releases) quando o segredo `MAPS_API_KEY` estiver configurado no repositório. A pesquisa, o mapa, os marcadores e a lista de resultados permanecem inteiramente dentro do aplicativo.
 
 ## Tecnologias
 
@@ -32,7 +30,7 @@ Para mostrar mapa, marcadores e a lista de estabelecimentos dentro do próprio a
 
 ## Configuração do Google Maps
 
-O projeto não contém uma chave de API. Isso é intencional: chaves nunca devem ser publicadas no GitHub. A chave não é necessária para o modo de teste que abre as buscas no Google Maps.
+O projeto não contém uma chave de API. Isso é intencional: chaves nunca devem ser publicadas no GitHub.
 
 1. Abra o [Google Cloud Console](https://console.cloud.google.com/).
 2. Crie ou selecione um projeto com faturamento ativo.

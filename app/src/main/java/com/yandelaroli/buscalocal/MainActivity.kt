@@ -20,7 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yandelaroli.buscalocal.location.DeviceLocationProvider
-import com.yandelaroli.buscalocal.model.GeoPoint
 import com.yandelaroli.buscalocal.model.NearbyPlace
 import com.yandelaroli.buscalocal.ui.SearchScreen
 import com.yandelaroli.buscalocal.ui.SearchViewModel
@@ -76,9 +75,6 @@ class MainActivity : ComponentActivity() {
                     onRetry = viewModel::retry,
                     onDismissError = viewModel::clearError,
                     onOpenDirections = ::openInGoogleMaps,
-                    onOpenExternalSearch = { query ->
-                        openSearchInGoogleMaps(query, state.userLocation)
-                    },
                     onOpenLocationSettings = {
                         startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                     },
@@ -123,23 +119,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun openSearchInGoogleMaps(query: String, location: GeoPoint?) {
-        val center = location?.let { "${it.latitude},${it.longitude}" } ?: "0,0"
-        val geoUri = Uri.parse("geo:$center?q=${Uri.encode(query)}")
-        val mapsIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
-            setPackage("com.google.android.apps.maps")
-        }
-
-        try {
-            startActivity(mapsIntent)
-        } catch (_: ActivityNotFoundException) {
-            val browserQuery = location?.let {
-                "$query perto de ${it.latitude},${it.longitude}"
-            } ?: query
-            val browserUri = Uri.parse(
-                "https://www.google.com/maps/search/?api=1&query=${Uri.encode(browserQuery)}",
-            )
-            startActivity(Intent(Intent.ACTION_VIEW, browserUri))
-        }
-    }
 }
