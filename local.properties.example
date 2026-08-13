@@ -1,0 +1,5 @@
+# O Android Studio adiciona sdk.dir automaticamente.
+# sdk.dir=/caminho/para/Android/Sdk
+
+# Crie esta chave no Google Cloud e não a envie ao GitHub.
+MAPS_API_KEY=SUA_CHAVE_AQUI
